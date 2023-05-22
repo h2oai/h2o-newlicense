@@ -53,7 +53,8 @@ class RadixOrder extends H2O.H2OCountedCompleter<RadixOrder> {
     // it when aligning two keys in Merge()
     int keySize = ArrayUtils.sum(_bytesUsed);
     // 256MB is the DKV limit.  / 2 because we fit o and x together in one OXBatch.
-    int batchSize = 1048576 ; // larger, requires more memory with less remote row fetch and vice versa for smaller
+    //int batchSize = 1048576 ; // larger, requires more memory with less remote row fetch and vice versa for smaller
+    int batchSize = 500000 ; // larger, requires more memory with less remote row fetch and vice versa for smaller
     // The Math.max ensures that batches of o and x are aligned, even for wide
     // keys.  To save % and / in deep iteration; e.g. in insert().
     Log.debug("Time to use rollup stats to determine biggestBit: " + ((t1=System.nanoTime()) - t0) / 1e9+" seconds."); t0=t1;
