@@ -82,13 +82,14 @@ class SortCombine extends DTask<SortCombine> {
     long leftTo = leftN; // number of rows in left frame
 
     long retSize = leftTo - _leftFrom - 1;
-    assert retSize >= 0;
+    assert retSize >= 0;GLM.jav
     if (retSize == 0) {
       tryComplete();
       return;
     }
 
-    _retBatchSize = 1048576;   // must set to be the same from RadixOrder.java
+    //_retBatchSize = 1048576;   // must set to be the same from RadixOrder.java
+    _retBatchSize = 500000;
     _numRowsInResult = retSize;
     
     setPerNodeNumsToFetch();  // find out the number of rows to fetch from H2O nodes, number of rows to fetch per chunk
