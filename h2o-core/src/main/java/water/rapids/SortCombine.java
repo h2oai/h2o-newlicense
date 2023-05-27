@@ -82,7 +82,7 @@ class SortCombine extends DTask<SortCombine> {
     long leftTo = leftN; // number of rows in left frame
 
     long retSize = leftTo - _leftFrom - 1;
-    assert retSize >= 0;GLM.jav
+    assert retSize >= 0;
     if (retSize == 0) {
       tryComplete();
       return;
