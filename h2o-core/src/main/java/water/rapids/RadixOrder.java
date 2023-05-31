@@ -1,9 +1,6 @@
 package water.rapids;
 
-import water.H2O;
-import water.Key;
-import water.MRTask;
-import water.RPC;
+import water.*;
 import water.fvec.Chunk;
 import water.fvec.Frame;
 import water.fvec.Vec;
@@ -12,8 +9,9 @@ import water.util.Log;
 import water.util.MathUtils;
 
 import java.math.BigInteger;
-import static java.math.BigInteger.ZERO;
+
 import static java.math.BigInteger.ONE;
+import static java.math.BigInteger.ZERO;
 
 
 // counted completer so that left and right index can run at the same time
@@ -53,13 +51,37 @@ class RadixOrder extends H2O.H2OCountedCompleter<RadixOrder> {
     // it when aligning two keys in Merge()
     int keySize = ArrayUtils.sum(_bytesUsed);
     // 256MB is the DKV limit.  / 2 because we fit o and x together in one OXBatch.
-    //int batchSize = 1048576 ; // larger, requires more memory with less remote row fetch and vice versa for smaller
-    int batchSize = 500000 ; // larger, requires more memory with less remote row fetch and vice versa for smaller
+    int batchSize = 1048576 ; // larger, requires more memory with less remote row fetch and vice versa for smaller
+    // go through all node memory and reduce batchSize if needed
+    long minMem = Long.MAX_VALUE;
+    for (H2ONode h2o : H2O.CLOUD._memary) {
+      long mem = h2o._heartbeat.get_free_mem(); // in bytes
+      if (mem < minMem)
+        minMem = mem;
+    }
+    
+    // at some point, a MSB worth of compare columns will be stored at any one node.  Make sure we have enough memory
+    // for that.
+    long minSortMemory = _whichCols.length*Math.max(_DF.numRows(), batchSize)*8*4*20;
+    if (minMem < minSortMemory) // if not enough, just throw an error and get out
+      throw new RuntimeException("The minimum memory of one of your nodes is too small to accommodate the sorting " +
+              "operation.  Make sure the smallest node has at least "+minSortMemory+" bytes of memory.");
+    // an array of size batchsize by numCols will be created for each sorted chunk in the end.  Memory is in bytes
+    long expandFactor = 8*((long) _DF.numCols())*20; // 8 to translate 64 bits into 8 bytes, 100 is a scale up factor 
+    long batchMemory = Math.max((long) batchSize*expandFactor, minSortMemory);
+    if (batchMemory > minMem) {  // batchsize is too big for node with smallest memory, reduce it
+      batchSize = (int) Math.floor(minMem/expandFactor);
+      if (batchSize == 0)
+        throw new RuntimeException("The minimum memory of one of your nodes is too small to accommodate the sorting " +
+                "operation.  Make sure the smallest node has at least "+10*expandFactor+" bytes of memory.");
+    }
+    
+
     // The Math.max ensures that batches of o and x are aligned, even for wide
     // keys.  To save % and / in deep iteration; e.g. in insert().
     Log.debug("Time to use rollup stats to determine biggestBit: " + ((t1=System.nanoTime()) - t0) / 1e9+" seconds."); t0=t1;
 
-    if( _whichCols.length > 0 )
+    if( _whichCols.length > 0 ) // batchsize is not used here
       new RadixCount(_isLeft, _base[0], _shift[0], _whichCols[0], _id_maps, _ascending[0], _mergeId).doAll(_DF.vec(_whichCols[0]));
     Log.debug("Time of MSB count MRTask left local on each node (no reduce): " + ((t1=System.nanoTime()) - t0) / 1e9+" seconds."); t0=t1;
 

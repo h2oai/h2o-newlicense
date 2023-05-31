@@ -66,6 +66,7 @@ class SortCombine extends DTask<SortCombine> {
     }
     _chunkNum = _leftSB._frame.anyVec().nChunks();
     _leftSortedOXHeader = leftSortedOXHeader;
+    _retBatchSize = (int) _leftKO._batchSize;
   }
 
   @Override
@@ -87,9 +88,7 @@ class SortCombine extends DTask<SortCombine> {
       tryComplete();
       return;
     }
-
-    //_retBatchSize = 1048576;   // must set to be the same from RadixOrder.java
-    _retBatchSize = 500000;
+    
     _numRowsInResult = retSize;
     
     setPerNodeNumsToFetch();  // find out the number of rows to fetch from H2O nodes, number of rows to fetch per chunk

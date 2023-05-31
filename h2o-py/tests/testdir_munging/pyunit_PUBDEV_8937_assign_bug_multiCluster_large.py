@@ -8,11 +8,13 @@ from tests import pyunit_utils
 # 6 nodes with 8GB per node with a dataset of 3.1GB.  If sort is called, it will not work.
 def test_sort_multiCluster():
     df = h2o.import_file(pyunit_utils.locate("bigdata/laptop/sort_merge_tests/pubdev_8866_mem_leak_data.csv"))
-    print("before sort row 0: {0}".format(df[0,1]))
-    dfSort = df.sort("C2")
-    print("Sorted column row 0: {0}".format(dfSort[0,1]))
-    print("Okay")
-
+    dfsorted = df.sort("C2")
+    indices = [0,100,1000,10000,100000]
+    print(dfsorted[0,1])
+#    for ind in indices:
+#        assert dfsorted[ind, 1] <= dfsorted[ind+1, 1], "Column is not properly sorted, row {0}: {1} should b <= row {2}:" \
+#                                                   " {3} but is not.".format(ind, dfsorted[ind, 1], ind+1, dfsorted[ind+1, 1])
+        
 if __name__ == "__main__":
     pyunit_utils.standalone_test(test_sort_multiCluster)
 else:
