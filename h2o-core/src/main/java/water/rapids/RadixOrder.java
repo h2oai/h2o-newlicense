@@ -59,24 +59,23 @@ class RadixOrder extends H2O.H2OCountedCompleter<RadixOrder> {
       if (mem < minMem)
         minMem = mem;
     }
-    
     // at some point, a MSB worth of compare columns will be stored at any one node.  Make sure we have enough memory
     // for that.
-    long minSortMemory = _whichCols.length*Math.max(_DF.numRows(), batchSize)*8*4*20;
+    long minSortMemory = _whichCols.length*Math.max(_DF.numRows(), batchSize)*8*4*25;
     if (minMem < minSortMemory) // if not enough, just throw an error and get out
       throw new RuntimeException("The minimum memory of one of your nodes is too small to accommodate the sorting " +
               "operation.  Make sure the smallest node has at least "+minSortMemory+" bytes of memory.");
     // an array of size batchsize by numCols will be created for each sorted chunk in the end.  Memory is in bytes
-    long expandFactor = 8*((long) _DF.numCols())*20; // 8 to translate 64 bits into 8 bytes, 100 is a scale up factor 
+    long expandFactor = 8*((long) _DF.numCols())*100; // 8 to translate 64 bits into 8 bytes, 100 is a scale up factor 
     long batchMemory = Math.max((long) batchSize*expandFactor, minSortMemory);
     if (batchMemory > minMem) {  // batchsize is too big for node with smallest memory, reduce it
       batchSize = (int) Math.floor(minMem/expandFactor);
       if (batchSize == 0)
         throw new RuntimeException("The minimum memory of one of your nodes is too small to accommodate the sorting " +
-                "operation.  Make sure the smallest node has at least "+10*expandFactor+" bytes of memory.");
+                "operation.  Make sure the smallest node has at least "+100*expandFactor+" bytes of memory.");
     }
+    Log.info("batchsize ", batchSize);
     
-
     // The Math.max ensures that batches of o and x are aligned, even for wide
     // keys.  To save % and / in deep iteration; e.g. in insert().
     Log.debug("Time to use rollup stats to determine biggestBit: " + ((t1=System.nanoTime()) - t0) / 1e9+" seconds."); t0=t1;

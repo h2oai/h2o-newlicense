@@ -9,11 +9,9 @@ from tests import pyunit_utils
 def test_sort_multiCluster():
     df = h2o.import_file(pyunit_utils.locate("bigdata/laptop/sort_merge_tests/pubdev_8866_mem_leak_data.csv"))
     dfsorted = df.sort("C2")
-    indices = [0,100,1000,10000,100000]
-    print(dfsorted[0,1])
-#    for ind in indices:
-#        assert dfsorted[ind, 1] <= dfsorted[ind+1, 1], "Column is not properly sorted, row {0}: {1} should b <= row {2}:" \
-#                                                   " {3} but is not.".format(ind, dfsorted[ind, 1], ind+1, dfsorted[ind+1, 1])
+    checkCol = 10
+    prob = checkCol/df.nrow
+    pyunit_utils.check_sorted_1_column(dfsorted, 1, prob=prob)
         
 if __name__ == "__main__":
     pyunit_utils.standalone_test(test_sort_multiCluster)

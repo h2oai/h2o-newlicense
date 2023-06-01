@@ -6,6 +6,7 @@ import water.fvec.Frame;
 import water.fvec.NewChunk;
 import water.fvec.Vec;
 import water.parser.BufferedString;
+import water.util.Log;
 
 import java.util.Arrays;
 
@@ -66,7 +67,7 @@ class SortCombine extends DTask<SortCombine> {
     }
     _chunkNum = _leftSB._frame.anyVec().nChunks();
     _leftSortedOXHeader = leftSortedOXHeader;
-    _retBatchSize = (int) _leftKO._batchSize;
+
   }
 
   @Override
@@ -75,6 +76,8 @@ class SortCombine extends DTask<SortCombine> {
     long t0 = System.nanoTime();
     _leftKO = new KeyOrder(_leftSortedOXHeader, _mergeId);
     _leftKO.initKeyOrder(_leftSB._msb,/*left=*/true);
+    _retBatchSize = (int) _leftKO._batchSize;
+    Log.info("retBatchSize ", _retBatchSize);
     final long leftN = _leftSortedOXHeader._numRows; // store number of rows in left frame for the MSB
     assert leftN >= 1;
     _timings[0] += (System.nanoTime() - t0) / 1e9;
